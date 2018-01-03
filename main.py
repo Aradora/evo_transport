@@ -1,5 +1,7 @@
 import numpy as np
 import random
+from matplotlib.pyplot import plot
+from matplotlib.pyplot import show
 
 def mattest(matrix, row_max, col_max):
     row_test = matrix.sum(axis=1,dtype=np.int)
@@ -54,10 +56,9 @@ def createspeciman(dim,row_max,col_max):
 
 
 #selekcja turniejowa
-def tournament(population, toursize, percentage, cost):
+def tournament(population, toursize, lasted, cost):
     popbis = []
-    changedpop = int(np.trunc(len(population)*percentage/100))
-    while len(popbis) < changedpop :
+    while len(popbis) < lasted :
         competitors =[]
         score = []
         for i in range(0,toursize):
@@ -65,8 +66,6 @@ def tournament(population, toursize, percentage, cost):
         for i in range(0,len(competitors)):
             score.append(grade(competitors[i],cost))
         popbis.append(competitors[score.index(min(score))])
-    for j in range(0,len(popbis)-changedpop):
-        popbis.append(population[random.randint(1,len(population)-1)])
     return popbis
 
 #krzyzowanie
@@ -77,24 +76,29 @@ def crossover(parent1,parent2):
     REM2 = np.zeros(parent1.shape, dtype=np.int)
     for i in range(0,parent1.shape[0]):
         for j in range(0, parent1.shape[1]):
-            DIV[i,j] = int(np.floor(parent1[i,j] + parent2[i,j] /2))
+            DIV[i,j] = int(np.floor(parent1[i,j] + parent2[i,j])/2)
             REM[i,j] = int(parent1[i,j]+parent2[i,j])%2
 
-    REM_row = REM.sum(axis=1, dtype=np.int)
-    REM_col = REM.sum(axis=0, dtype=np.int)
-    REM1_row = REM2_row = REM_row/2
-    REM1_col = REM2_col = REM_col/2
-    for i in range(0,REM.shape[0]):
-        for j in range(0, REM.shape[1]):
-            if REM[i,j] == 1:
-                if REM1_col[j] > REM2_col[j] and REM1_row[i] > 0:
-                    REM2[i,j] = 1
-                    REM2_col[j] = REM2_col[j] - 1
-                    REM2_row[i] = REM2_row[i] - 1
-                else:
-                    REM1[i,j] = 1
+    REMbis = REM.copy()
+    for i in range(0,REMbis.shape[0]):
+        for j in range(0, REMbis.shape[1]):
+            if REMbis[i,j] == 1:
+                REMbis[i, j] = 0
+                REM1[i,j] = 1
+                for k in range(i,REMbis.shape[0]):
+                    if REMbis[k,j] == 1:
+                        REMbis[k,j] = 0
+                        REM2[k,j] = 1
+                        break
+                for m in range(j,REMbis.shape[1]):
+                    if REMbis[i,m] == 1:
+                        REMbis[i,m] = 0
+                        REM2[i,m] = 1
+                        break
 
-    return DIV, REM
+
+
+    return DIV+REM1,DIV+REM2
 
 
 #TODO mutacja
@@ -104,20 +108,35 @@ cost_mat = np.array([[10,0,20,11 ],[12,7,9,20],[0,14,16,18]]) #macierz kosztow t
 SUPER_ROZWIAZANE = np.array([[0,5,0,10 ],[0,10,15,0],[5,0,0,0]]) #rozwiazanie modelowe
 sour = 15,25,5 #max w wierszach
 dest = 5,15,15,10 #max w kolumnach
-generetions = 5
+GENERATIONS = 30
+POP_SIZE = 600
+score = []
+history = []
 
 #generacja populacji
 Population = []
-for i in range(0,40):
+for i in range(0,POP_SIZE):
     Population.append(createspeciman([3,4],sour,dest))
-crossover(Population[1],Population[2])
-#metoda turniejowa
-for i in range(0,generetions):
-    Population = tournament(Population, 2, 100, cost_mat)
+
+for z in range(0,10):
+    #metoda turniejowa
+    for i in range(0,GENERATIONS):
+        genscore = []
+        for j in range(0,int(len(Population)/2)):
+            child1,child2 = crossover(Population[j],Population[len(Population)-j-1])
+            Population.append(child1)
+            Population.append(child2)
+        Population = tournament(Population, 4, 40, cost_mat)
+        for i in range(0, len(Population)):
+            genscore.append(grade(Population[i], cost_mat))
+        score.append(min(genscore))
+
 
 print("The lesser, the better: \n")
-for i in range(0,len(Population)):
-    score = grade(Population[i], cost_mat)
-    print(score)
+targetline = [grade(SUPER_ROZWIAZANE,cost_mat),grade(SUPER_ROZWIAZANE,cost_mat)]
+plot(score,'-b',[0,GENERATIONS],targetline,'-r')
+show()
+print(np.min(score))
+print(grade(SUPER_ROZWIAZANE,cost_mat))
 
 
