@@ -10,7 +10,7 @@ def mattest(matrix, row_max, col_max):
             return False
     for col in range(0,matrix.shape[1]):
         if col_max[col] != col_test[col]:
-            return  False
+            return False
     return True
 
 
@@ -20,7 +20,7 @@ def grade(matrix, cost):
         for col in range(0,cost.shape[1]):
             #print(matrix[row,col], end=" ")
             penal = penal + (matrix[row,col]*cost[row,col])
-        print("\n")
+        #print("\n")
     return penal
 
 
@@ -50,14 +50,13 @@ def createspeciman(dim,row_max,col_max):
                     tmpcol[y] = 0
         if mattest(matrix,row_max,col_max):
             break
-    print(str(counter))
     return matrix
 
 #TODO mutacja
 
 #TODO krzyzowanie
 
-#TODO generacja populacji
+
 
 cost_mat = np.array([[10,0,20,11 ],[12,7,9,20],[0,14,16,18]]) #macierz kosztow transportu
 SUPER_ROZWIAZANE = np.array([[0,5,0,10 ],[0,10,15,0],[5,0,0,0]]) #rozwiazanie modelowe
@@ -65,12 +64,15 @@ visited = np.zeros((3,4),dtype=np.int)
 sour = 15,25,5
 dest = 5,15,15,10
 
-rozw = createspeciman([3,4],sour,dest)
+#generacja populacji
+Population = []
+for i in range(0,40):
+    Population.append(createspeciman([3,4],sour,dest))
 
-print(rozw)
+print("The lesser, the better: \n")
+for i in range(0,len(Population)):
+    score = grade(Population[i], cost_mat)
+    print(score)
 
-score = grade(rozw, cost_mat)
-
-print("The lesser, the better: \n" + str(score))
 
 
